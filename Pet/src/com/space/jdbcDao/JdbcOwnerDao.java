@@ -4,33 +4,24 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.space.dao.OwnerDao;
-import com.space.global.AppFunction;
-import com.space.global.AppUI;
 import com.space.global.DataSource;
-import com.space.table.Hospital;
 import com.space.table.Owner;
-import com.space.table.Pet;
-import com.space.table.Pharmacy;
 
 public class JdbcOwnerDao implements OwnerDao{
 
 	@Override
-	public void insertOwner() {
-		System.out.println("Enter new owner id: ");
-    	int inputNum = AppFunction.inputInteger();
-    	
-    	System.out.println("Enter new owner name: ");
-    	String inputWord = AppFunction.inputString();
-    	
-    	
+	public void insertOwner(Owner owner) {
+		
 		try(Connection connection = DataSource.getDataSource();
 				PreparedStatement pStatement = connection.prepareStatement("INSERT INTO OWNER VALUES (?, ?)")){ 
 				
 			
-				pStatement.setInt(1, inputNum);
-				pStatement.setString(2, inputWord);
+				pStatement.setInt(1, owner.getOwnerId());
+				pStatement.setString(2, owner.getOwnerName());
 		
 				pStatement.executeUpdate();
 				
@@ -43,13 +34,13 @@ public class JdbcOwnerDao implements OwnerDao{
 		
 
 	@Override
-	public void deleteOwnerById(int ownerId) {
+	public void deleteOwner(Owner owner) {
 		try (Connection connection = DataSource.getDataSource();
 	             PreparedStatement preparedStatement
 	                     = connection.prepareStatement("DELETE OWNER WHERE OWNER_ID = ?")) {
-	            preparedStatement.setInt(1, ownerId);
+	            preparedStatement.setInt(1, owner.getOwnerId());
 	            preparedStatement.executeUpdate();
-	            AppUI.DeleteCompleteMessage();
+	           
 	        }
 	        catch (SQLException e) {
 	        e.printStackTrace();
@@ -58,15 +49,13 @@ public class JdbcOwnerDao implements OwnerDao{
 	}
 
 	@Override
-	public void updateOwnerById(int ownerId) {
-    	System.out.println("Enter new owner name: ");
-    	String inputWord = AppFunction.inputString();
+	public void updateOwner(Owner owner) {
     	
     	try(Connection connection = DataSource.getDataSource();
     			PreparedStatement pStatement = connection.prepareStatement("UPDATE OWNER SET OWNER_NAME = ? WHERE PLACE_NO = ?")){ 
     		
-			pStatement.setString(1, inputWord);
-			pStatement.setInt(2, ownerId);
+			pStatement.setString(1, owner.getOwnerName());
+			pStatement.setInt(2, owner.getOwnerId());
 			
 			
 			pStatement.executeUpdate(); 
@@ -80,8 +69,33 @@ public class JdbcOwnerDao implements OwnerDao{
 	}
 
 	@Override
-	public void findAllOwners() {
-		// TODO Auto-generated method stub
+	public List<Owner> findAllOwners() {
+		List<Owner> owners = new ArrayList<Owner>();
+		
+		try (Connection connection = DataSource.getDataSource();
+				PreparedStatement pStatement = connection.prepareStatement(
+						"SELECT * FROM OWNER ORDER BY OWNER_ID DESC");
+				ResultSet rs = pStatement.executeQuery()) { 
+			
+			while(rs.next()) { 
+				Owner owner = new Owner();
+			
+				owner.setOwnerId(rs.getInt("owner_id")); 
+				owner.setOwnerName(rs.getString("owner_name"));
+				
+				owners.add(owner);
+			}
+			for (Owner owner : owners) {
+				System.out.println(owner);
+			}
+		} catch (SQLException e) {
+			
+			e.printStackTrace();
+		}
+		
+		
+		
+		return owners;
 		
 	}
 

@@ -4,10 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.space.dao.SalonDao;
-import com.space.global.AppFunction;
-import com.space.global.AppUI;
 import com.space.global.DataSource;
 import com.space.table.Pet;
 import com.space.table.Salon;
@@ -15,28 +15,16 @@ import com.space.table.Salon;
 public class JdbcSalonDao implements SalonDao{
 
 	@Override
-	public void insertSalon() {
-		System.out.println("Enter new salon id: ");
-    	int inputId = AppFunction.inputInteger();
-    	
-    	System.out.println("Enter new salon name: ");
-    	String inputName = AppFunction.inputString();
-    	
-    	System.out.println("Enter salon location: ");
-    	String inputLoc = AppFunction.inputString();
-    	
-    	System.out.println("Enter pet id: ");
-    	int inputPet = AppFunction.inputInteger();
-    	
-    	
+	public void insertSalon(Salon salon) {
+		
 		try(Connection connection = DataSource.getDataSource();
 				PreparedStatement pStatement = connection.prepareStatement("INSERT INTO SALON VALUES (?, ?, ?, ?)")){ 
 				
 			
-				pStatement.setInt(1, inputId);
-				pStatement.setString(2, inputName);
-				pStatement.setString(3, inputLoc);
-				pStatement.setInt(4, inputPet);
+				pStatement.setInt(1, salon.getSalonId());
+				pStatement.setString(2, salon.getSalonName());
+				pStatement.setString(3, salon.getSalonLoc());
+				pStatement.setInt(4, salon.getPet().getPetId());
 		
 				pStatement.executeUpdate();
 				
@@ -49,13 +37,13 @@ public class JdbcSalonDao implements SalonDao{
 	}
 
 	@Override
-	public void deleteSalonById(int salonId) {
+	public void deleteSalon(Salon salon) {
 		try (Connection connection = DataSource.getDataSource();
 	             PreparedStatement preparedStatement
 	                     = connection.prepareStatement("DELETE SALON WHERE SALON_ID = ?")) {
-	            preparedStatement.setInt(1, salonId);
+	            preparedStatement.setInt(1, salon.getSalonId());
 	            preparedStatement.executeUpdate();
-	            AppUI.DeleteCompleteMessage();
+	          
 	        }
 	        catch (SQLException e) {
 	        e.printStackTrace();
@@ -65,44 +53,23 @@ public class JdbcSalonDao implements SalonDao{
 	}
 
 	@Override
-	public void updateSalonById(int salonId) {
-		Salon salon = new Salon();
-		JdbcSalonDao jdbcSalonDao = new JdbcSalonDao();
+	public void updateSalon(Salon salon) {
 		
-		salon = jdbcSalonDao.findSalonById(salonId);
-		
-    	System.out.println("Enter salon name to change: ");
-    	String inputName = AppFunction.inputString();
-    	
-    	System.out.println("Enter salon location to change: ");
-    	String inputLoc = AppFunction.inputString();
-    	
-    	System.out.println("Enter pet id to change: ");
-    	int inputPet = AppFunction.inputInteger();
-    	
     	try(Connection connection = DataSource.getDataSource();
     			PreparedStatement pStatement = connection.prepareStatement("UPDATE SALON SET SALON_NAME = ?, SALON_LOCATION = ?, PET_ID = ? WHERE SALON_ID = ?")){ 
     		
-    		if(!inputName.isEmpty()) {
-    			pStatement.setString(1, inputName);
-    		} else {
+    		
     			pStatement.setString(1, salon.getSalonName());
-    		}
-			if(!inputLoc.isEmpty()) {
-				pStatement.setString(2, inputLoc);
-			} else {
+    		
 				pStatement.setString(2, salon.getSalonLoc());
-			}
-			if(inputPet == 0) {
-				pStatement.setInt(3, inputPet);
-			} else {
+			
 				Pet pet = new Pet();
-				pet.setPetId(inputPet);
+				pet.setPetId(pet.getPetId());
 				salon.setPet(pet);
 				pStatement.setInt(3, salon.getPet().getPetId());
-			}
 			
-			pStatement.setInt(4, salonId);
+			
+			pStatement.setInt(4, salon.getSalonId());
 			
 			
 			pStatement.executeUpdate(); 
@@ -116,8 +83,36 @@ public class JdbcSalonDao implements SalonDao{
 	}
 
 	@Override
-	public void findAllSalons() {
-		// TODO Auto-generated method stub
+	public List<Salon> findAllSalons() {
+		List<Salon> salons = new ArrayList<Salon>();
+		
+		try (Connection connection = DataSource.getDataSource();
+				PreparedStatement pStatement = connection.prepareStatement("SELECT * FROM SALON ORDER BY SALON_ID DESC");
+				ResultSet rs = pStatement.executeQuery()) {
+			
+			while(rs.next()) {
+				Salon salon = new Salon();
+			
+				salon.setSalonId(rs.getInt("salon_id")); 
+				salon.setSalonName(rs.getString("salon_name"));
+				salon.setSalonLoc(rs.getString("salon_location"));
+				
+				Pet pet = new Pet();
+				pet.setPetId(rs.getInt("pet_id")); 
+				salon.setPet(pet); 
+				
+				salons.add(salon);
+			}
+			for (Salon salon : salons) {
+				System.out.println(salons);
+			}
+		} catch (SQLException e) {
+			
+			e.printStackTrace();
+		}
+		
+				
+		return salons;
 		
 	}
 
